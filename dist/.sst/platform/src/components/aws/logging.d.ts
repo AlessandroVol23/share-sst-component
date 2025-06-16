@@ -1,0 +1,25 @@
+export declare const RETENTION: {
+    "1 day": number;
+    "3 days": number;
+    "5 days": number;
+    "1 week": number;
+    "2 weeks": number;
+    "1 month": number;
+    "2 months": number;
+    "3 months": number;
+    "4 months": number;
+    "5 months": number;
+    "6 months": number;
+    "1 year": number;
+    "13 months": number;
+    "18 months": number;
+    "2 years": number;
+    "3 years": number;
+    "5 years": number;
+    "6 years": number;
+    "7 years": number;
+    "8 years": number;
+    "9 years": number;
+    "10 years": number;
+    forever: number;
+};

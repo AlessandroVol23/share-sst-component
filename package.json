@@ -1,0 +1,26 @@
+{
+    "name": "@awsfundamentals/my-sst-bucket",
+    "version": "1.0.0",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "scripts": {
+        "build": "tsc",
+        "prepublishOnly": "npm run build"
+    },
+    "dependencies": {
+        "@pulumi/pulumi": "^3.0.0",
+        "constructs": "^10.0.0",
+        "sst": "^3.0.0",
+        "@pulumi/aws": "^6.0.0"
+    },
+    "peerDependencies": {
+        "sst": "^3.0.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.0.0"
+    },
+    "files": [
+        "dist/**/*",
+        "README.md"
+    ]
+}
