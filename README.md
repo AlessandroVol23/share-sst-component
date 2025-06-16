@@ -1,18 +1,48 @@
-# MyBucket - Custom SST Bucket Component
+# MyBucket - Example SST Component Sharing
 
-A custom S3 bucket component for SST v3 that adds prefix functionality to organize your buckets.
+**⚠️ This is an experimental example showcasing how to share and abstract SST v3 components across projects.** 
 
-## Installation
+This package demonstrates one approach to creating reusable SST components that can be shared between teams and projects. It extends SST's built-in Bucket component with prefix functionality as a proof of concept.
 
-```bash
-npm install @awsfundamentals/my-sst-bucket
-```
+## Purpose & Scope
 
-## Usage
+This project serves as an **exampl** on how to share SST components.
+This is done by bundling the `.sst` packages. 
 
-### 1. Initialize the package in your SST app
+**This is not production-ready** and serves primarily as a foundation for further development and experimentation.
 
-First, initialize the package with your SST context in your `sst.config.ts`:
+## Known Issues & Limitations
+
+### 🚨 Current Challenges
+
+- **Version Mismatches**: SST version differences between this package and consuming apps can cause conflicts
+- **Pulumi Version Issues**: Different Pulumi versions may lead to compatibility problems  
+- **Large Package Size**: Including SST dependencies makes the package unnecessarily large
+- **Type Safety**: Current implementation uses `any` types in several places, reducing type safety
+- **Global Variable Pollution**: Sets global `$app` and `$dev` variables which could conflict
+
+## Local Development & Testing
+
+Since this is an experimental package, focus on local testing rather than publishing:
+
+### Method 1: Using npm link (Recommended for active development)
+
+1. **In this package directory:**
+   ```bash
+   npm run build
+   npm link
+   ```
+
+2. **In your SST project directory:**
+   ```bash
+   npm link @awsfundamentals/my-sst-bucket
+   ```
+
+## Usage Example
+
+### 1. Initialize the Package
+
+In your test SST project's `sst.config.ts`:
 
 ```typescript
 import { initMyBucket, MyBucket } from "@awsfundamentals/my-sst-bucket";
@@ -20,13 +50,13 @@ import { initMyBucket, MyBucket } from "@awsfundamentals/my-sst-bucket";
 export default $config({
   app(input) {
     return {
-      name: "my-app",
+      name: "test-app",
       removal: input?.stage === "production" ? "retain" : "remove",
       home: "aws",
     };
   },
   async run() {
-    // Initialize the MyBucket package with SST context
+    // Initialize the package with SST context
     initMyBucket({
       app: {
         name: $app.name,
@@ -35,9 +65,9 @@ export default $config({
       dev: $dev,
     });
 
-    // Now you can use MyBucket components
-    const bucket = new MyBucket("UserAssets", {
-      prefix: "myapp",
+    // Test the custom bucket component
+    const bucket = new MyBucket("TestBucket", {
+      prefix: "example",
       access: "public",
       versioning: true,
     });
@@ -45,114 +75,105 @@ export default $config({
     return {
       bucketName: bucket.name,
       bucketArn: bucket.arn,
+      prefixedName: bucket.getPrefixedName(), // "example-TestBucket"
     };
   },
 });
 ```
 
-### 2. Use the component
+### 2. Test the Implementation
 
-```typescript
-const bucket = new MyBucket("UserAssets", {
-  prefix: "myapp",           // Required: adds prefix to bucket name
-  access: "public",          // Optional: enable public read access
-  versioning: true,          // Optional: enable versioning
-  cors: {                    // Optional: CORS configuration
-    allowOrigins: ["https://myapp.com"],
-    allowMethods: ["GET", "POST", "PUT"]
-  }
-});
-
-// Access bucket properties
-console.log(bucket.name);              // The actual S3 bucket name
-console.log(bucket.getPrefixedName()); // "myapp-UserAssets"
-console.log(bucket.arn);               // The bucket ARN
-console.log(bucket.domain);            // The bucket domain
-```
-
-### 3. Link to other resources
-
-You can link the bucket to other SST resources just like regular SST components:
-
-```typescript
-new sst.aws.Nextjs("MyWeb", {
-  link: [bucket]
-});
-```
-
-Then use it in your app:
-
-```typescript
-import { Resource } from "sst";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-
-const command = new PutObjectCommand({
-  Key: "file.txt",
-  Bucket: Resource.UserAssets.name // This will be the actual bucket name
-});
-await getSignedUrl(new S3Client({}), command);
+```bash
+# In your test SST project
+sst dev
 ```
 
 ## API Reference
 
 ### `initMyBucket(context: SSTContext)`
 
-Initialize the package with SST context. Must be called before using any MyBucket components.
+**Must be called before using MyBucket components.** Initializes global SST variables.
 
-**Parameters:**
-- `context.app.name` - Your SST app name
-- `context.app.stage` - Your SST app stage
-- `context.dev` - Whether running in dev mode
+```typescript
+initMyBucket({
+  app: {
+    name: $app.name,    // SST app name
+    stage: $app.stage,  // SST app stage
+  },
+  dev: $dev,           // SST dev mode
+});
+```
 
 ### `MyBucket`
 
-**Constructor:** `new MyBucket(name: string, args: MyBucketArgs, opts?: ComponentResourceOptions)`
+Example component that wraps SST's Bucket with prefix functionality.
+
+```typescript
+const bucket = new MyBucket("Storage", {
+  prefix: "team-alpha",        // Required: prefix for bucket name
+  access?: "public",           // Optional: public access
+  versioning?: true,           // Optional: enable versioning
+  cors?: { /* config */ },     // Optional: CORS settings
+  transform?: { /* config */ } // Optional: transform resources
+});
+```
 
 **Properties:**
-- `name` - The actual S3 bucket name
-- `arn` - The bucket ARN
-- `domain` - The bucket domain
-- `prefix` - The prefix used for this bucket
+- `name` - Actual S3 bucket name (Output<string>)
+- `arn` - Bucket ARN (Output<string>)  
+- `domain` - Bucket domain (Output<string>)
+- `prefix` - Prefix used (string)
 
 **Methods:**
-- `getPrefixedName()` - Returns the prefixed name format
+- `getPrefixedName()` - Display name with prefix
+- `notify(args)` - Subscribe to bucket events
 
-### `MyBucketArgs`
+## Testing Your Changes
 
-- `prefix: string` - **Required.** Prefix to add to bucket name
-- `access?: "public" | "cloudfront"` - Enable public access
-- `versioning?: boolean` - Enable versioning
-- `cors?: boolean | CorsConfig` - CORS configuration
-- `transform?` - Transform underlying resources
+1. **Make changes to the package**
+2. **Rebuild:**
+   ```bash
+   npm run build
+   ```
+3. **Test in your SST app:**
+   ```bash
+   sst dev
+   ```
 
-## Examples
+Changes are reflected immediately with npm link!
 
-### Basic bucket with prefix
-```typescript
-const bucket = new MyBucket("Assets", {
-  prefix: "prod"
-});
-// Creates bucket: "prod-assets"
+## Unlinking When Done
+
+**In your SST project:**
+```bash
+npm unlink @awsfundamentals/my-sst-bucket
+npm install  # Restore normal dependencies
 ```
 
-### Public bucket with versioning
-```typescript
-const bucket = new MyBucket("PublicFiles", {
-  prefix: "cdn",
-  access: "public",
-  versioning: true
-});
+**In the package directory:**
+```bash
+npm unlink
 ```
 
-### Development vs Production
-```typescript
-const bucket = new MyBucket("Data", {
-  prefix: $app.stage, // Use stage as prefix
-  versioning: $app.stage === "production"
-});
+## Production Considerations
+
+**This package is not ready for production use.** If you want to publish similar components:
+
+1. **Resolve version compatibility issues**
+2. **Improve type safety throughout** 
+3. **Optimize bundle size**
+
+When ready for production (needs to be tested still):
+```bash
+npm run build
+npm login  
+npm publish --access public
 ```
 
-## License
 
-MIT 
+---
+
+**This is an experimental example. Use at your own risk and expect to encounter issues that need resolution for production use.** 
+
+
+(yes this readme is ai generated)
