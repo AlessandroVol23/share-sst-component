@@ -17,7 +17,7 @@ This is done by bundling the `.sst` packages.
 
 - **Version Mismatches**: SST version differences between this package and consuming apps can cause conflicts
 - **Pulumi Version Issues**: Different Pulumi versions may lead to compatibility problems  
-- **Large Package Size**: Including SST dependencies makes the package unnecessarily large
+- **Large Package Size**: Including SST dependencies makes the package unnecessarily large. Remove them and give a small tutorial on how to generate them yourself (basically npm i and sst install)
 - **Type Safety**: Current implementation uses `any` types in several places, reducing type safety
 - **Global Variable Pollution**: Sets global `$app` and `$dev` variables which could conflict
 
